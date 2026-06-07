@@ -19,9 +19,9 @@ const utils = require('./lib/utils');
 class ServerlessPluginSplitStacks {
 
   constructor(serverless, options) {
-    if (!semver.satisfies(serverless.version, '>= 1.13')) {
-      throw new Error('serverless-plugin-split-stacks requires serverless 1.13 or higher!');
-    }
+    // if (!semver.satisfies(serverless.version, '>= 1.13')) {
+    //   throw new Error('serverless-plugin-split-stacks requires serverless 1.13 or higher!');
+    // }
 
     this.serverless = serverless;
     this.options = options;
