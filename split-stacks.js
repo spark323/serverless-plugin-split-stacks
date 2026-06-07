@@ -75,10 +75,6 @@ class ServerlessPluginSplitStacks {
     const deploymentBucketObject = this.serverless.service.provider.deploymentBucketObject;
 
     const putObject = params => {
-      if (this.provider.request) {
-        return this.provider.request('S3', 'putObject', params);
-      }
-
       if (this.provider.getAwsSdkV3Config) {
         this.s3ClientPromise = this.s3ClientPromise || this.provider
           .getAwsSdkV3Config()
@@ -86,6 +82,10 @@ class ServerlessPluginSplitStacks {
 
         return this.s3ClientPromise
           .then(client => client.send(new PutObjectCommand(params)));
+      }
+
+      if (this.provider.request) {
+        return this.provider.request('S3', 'putObject', params);
       }
 
       return Promise.reject(new Error('AWS provider does not expose request() or getAwsSdkV3Config()'));

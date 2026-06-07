@@ -50,6 +50,24 @@ test('calls twice with NextToken', t => {
 		});
 });
 
+test('uses CloudFormation client when provider exposes AWS SDK v3 client', t => {
+	const send = sinon.stub().resolves({
+		StackResourceSummaries: ['a']
+	});
+	const getCloudFormationClient = sinon.stub().resolves({ send });
+
+	t.context.provider = {
+		getCloudFormationClient
+	};
+
+	return t.context.getStackSummary('foo')
+		.then(summary => {
+			t.true(getCloudFormationClient.calledOnce);
+			t.true(send.calledOnce);
+			t.deepEqual(summary, ['a']);
+		});
+});
+
 test('retry on Rate exceeeded', t => {
 	const request = sinon.stub()
 		.onCall(0).rejects({
