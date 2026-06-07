@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const semver = require('semver');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 const setDeploymentBucketEndpoint = require('./lib/deployment-bucket-endpoint');
 const migrateExistingResources = require('./lib/migrate-existing-resources');
@@ -73,6 +74,23 @@ class ServerlessPluginSplitStacks {
   upload() {
     const deploymentBucketObject = this.serverless.service.provider.deploymentBucketObject;
 
+    const putObject = params => {
+      if (this.provider.request) {
+        return this.provider.request('S3', 'putObject', params);
+      }
+
+      if (this.provider.getAwsSdkV3Config) {
+        this.s3ClientPromise = this.s3ClientPromise || this.provider
+          .getAwsSdkV3Config()
+          .then(config => new S3Client(config));
+
+        return this.s3ClientPromise
+          .then(client => client.send(new PutObjectCommand(params)));
+      }
+
+      return Promise.reject(new Error('AWS provider does not expose request() or getAwsSdkV3Config()'));
+    };
+
     return this.provider.getServerlessDeploymentBucketName(this.options.stage, this.options.region)
       .then(deploymentBucket => {
         const files = this.getNestedStackFiles();
@@ -90,7 +108,7 @@ class ServerlessPluginSplitStacks {
             Object.assign(params, encryptionParams);
           }
 
-          return this.provider.request('S3', 'putObject', params);
+          return putObject(params);
         }));
       });
   }
